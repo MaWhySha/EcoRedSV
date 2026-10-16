@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>EcoRedSV</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: system-ui, sans-serif;
+            background: #f3f7f4;
+            color: #1f2d27;
+        }
+
+        header {
+            background: #2d6a4f;
+            color: white;
+            padding: 2rem 1.5rem;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.2rem;
+        }
+
+        header p {
+            margin: .5rem 0 0;
+            opacity: .9;
+        }
+
+        main {
+            max-width: 760px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .tarjeta {
+            background: white;
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+        }
+
+        .tarjeta h2 {
+            margin-top: 0;
+            font-size: 1.2rem;
+            color: #2d6a4f;
+        }
+
+        .ok {
+            color: #2d6a4f;
+            font-weight: bold;
+        }
+
+        .error {
+            color: #b3261e;
+            font-weight: bold;
+        }
+
+        ul {
+            padding-left: 1.2rem;
+        }
+
+        footer {
+            text-align: center;
+            font-size: .85rem;
+            color: #5c6b64;
+            padding: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .95rem;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: .45rem .5rem;
+            border-bottom: 1px solid #e3ebe6;
+        }
+
+        th {
+            color: #2d6a4f;
+        }
+
+        .nota {
+            font-size: .85rem;
+            color: #5c6b64;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>EcoRedSV</h1>
+        <p>Encuentra dónde entregar tus materiales reciclables</p>
+    </header>
+
+    <main>
+        <section class="tarjeta">
+            <h2>Estado del sistema</h2>
+            {% if estado_bd.conectado %}
+            <p class="ok">✔ Conectado a SQL Server</p>
+            <p><strong>Base de datos:</strong> {{ estado_bd.base }}</p>
+            <p><strong>Servidor:</strong> {{ estado_bd.version }}</p>
+            {% else %}
+            <p class="error">✘ Sin conexión con la base de datos</p>
+            <p>{{ estado_bd.error }}</p>
+            {% endif %}
+        </section>
+
+        <section class="tarjeta">
+            <h2>Módulos en desarrollo</h2>
+            <ul>
+                <li><strong>Usuarios:</strong> cuentas, roles, municipios y organizaciones.</li>
+                <li><strong>Puntos:</strong> lugares de entrega y materiales que reciben.</li>
+                <li><strong>Campañas:</strong> jornadas de recolección, inscripciones y resultados.</li>
+                <li><strong>Reportes:</strong> problemas ambientales, apoyos y comentarios.</li>
+            </ul>
+        </section>
+
+        <section class="tarjeta">
+            <h2>Prueba de clases (datos de ejemplo)</h2>
+            <p class="nota">Objetos creados en memoria para comprobar la lógica del sistema. No se guardan en la base de
+                datos.</p>
+
+            <h3>Marcadores del mapa (polimorfismo)</h3>
+            <table>
+                <tr>
+                    <th>Tipo</th>
+                    <th>Título</th>
+                    <th>Ícono</th>
+                </tr>
+                {% for marcador in marcadores %}
+                <tr>
+                    <td>{{ marcador.tipo }}</td>
+                    <td>{{ marcador.titulo }}</td>
+                    <td>{{ marcador.icono }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+
+            <h3>Detalle de cada elemento</h3>
+            <ul>
+                {% for elemento in elementos %}
+                <li>{{ elemento.mostrar_detalle }}</li>
+                {% endfor %}
+            </ul>
+
+            <h3>Resultados de la campaña</h3>
+            <ul>
+                {% for material, kilos in resultados.items %}
+                <li>{{ material }}: {{ kilos }} kg</li>
+                {% endfor %}
+            </ul>
+
+            <h3>Reportes ordenados por apoyos</h3>
+            <ol>
+                {% for reporte in reportes %}
+                <li>{{ reporte.titulo }} · {{ reporte.total_apoyos }} apoyo(s) · {{ reporte.estado }}</li>
+                {% endfor %}
+            </ol>
+
+            <h3>Historial de estados</h3>
+            <ul>
+                {% for cambio in historial %}
+                <li>
+                    {{ cambio.estado_anterior }} → {{ cambio.estado_nuevo }}
+                    por {{ cambio.responsable }}:
+                    {{ cambio.comentario }}
+                </li>
+                {% endfor %}
+            </ul>
+
+            <h3>Permisos por rol</h3>
+            <table>
+                {% for descripcion, permitido in permisos %}
+                <tr>
+                    <td>{{ descripcion }}</td>
+                    <td>
+                        {% if permitido %}
+                        <span class="ok">✔ Sí</span>
+                        {% else %}
+                        <span class="error">✘ No</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+
+            <h3>Validación</h3>
+            <p>Intento de registrar −2 kg: <span class="error">{{ error_validacion }}</span></p>
+        </section>
+    </main>
+
+    <footer>
+        Proyecto de Proyección Social · Grupo 6 · UNAB
+    </footer>
+</body>
+
+</html>
