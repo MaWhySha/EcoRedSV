@@ -176,6 +176,81 @@ La base de datos sigue un modelo relacional en SQL Server. Sus tablas principale
 - Mapa: Leaflet con OpenStreetMap
 - Control de versiones: Git y GitHub
 
+## Estructura del proyecto
+
+```
+EcoRedSV/
+├── config/         Configuración de Django (settings.py, urls.py)
+├── core/           Página de inicio y clases base (EntidadBase, Ubicable)
+├── usuarios/       Roles y permisos
+├── puntos/         Puntos de recepción y materiales
+├── campanias/      Campañas, inscripciones y recolección
+├── reportes/       Reportes ambientales, seguimiento y comentarios
+├── docs/           Diagramas y PDF de cada entrega
+├── manage.py
+├── requirements.txt
+└── .env.example    Plantilla de variables de entorno
+```
+
+## Instalación y ejecución
+
+### Requisitos
+
+- Python 3.12 o superior
+- SQL Server 2017 o superior (probado con SQL Server 2025 en Linux)
+- ODBC Driver 18 for SQL Server
+- Git
+
+### Pasos
+
+1. Clonar el repositorio:
+
+```bash
+git clone https://github.com/MaWhySha/EcoRedSV.git
+cd EcoRedSV
+```
+
+2. Crear y activar el entorno virtual:
+
+```bash
+# Linux
+python3 -m venv venv
+source venv/bin/activate
+
+# Windows
+python -m venv venv
+venv\Scripts\activate
+```
+
+3. Instalar las dependencias:
+
+```bash
+pip install -r requirements.txt
+```
+
+4. Crear en SQL Server la base de datos `ecoredsv` y un usuario con permisos sobre ella.
+
+5. Copiar `.env.example` como `.env` y completar los datos de conexión:
+
+```bash
+# Linux
+cp .env.example .env
+
+# Windows
+copy .env.example .env
+```
+
+6. Aplicar las migraciones y ejecutar el servidor:
+
+```bash
+python manage.py migrate
+python manage.py runserver
+```
+
+7. Abrir http://127.0.0.1:8000 en el navegador.
+
+> El archivo `.env` contiene credenciales y no se sube al repositorio.
+
 ## Estado del proyecto
 
-Actualmente, el proyecto se encuentra en la etapa de diseño de clases y modelado de la base de datos (Semana 3). Este diseño servirá como base para la configuración del entorno con Django y SQL Server en la Semana 4.
+El proyecto se encuentra en la Semana 4: se creó el proyecto en Django, se configuró la conexión con SQL Server y se programó la lógica inicial de las clases diseñadas en la Semana 3. En la Semana 5 se desarrollarán los modelos, las migraciones, los formularios y las operaciones CRUD.
