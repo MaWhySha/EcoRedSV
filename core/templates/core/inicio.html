@@ -125,11 +125,25 @@
         </section>
 
         <section class="tarjeta">
-            <h2>Prueba de clases (datos de ejemplo)</h2>
-            <p class="nota">Objetos creados en memoria para comprobar la lógica del sistema. No se guardan en la base de
-                datos.</p>
+            <h2>Datos registrados</h2>
+            <p class="nota">
+                Registros guardados en SQL Server, ingresados desde el panel de administración.
+            </p>
+            <table>
+                <tr>
+                    <th>Tabla</th>
+                    <th>Registros</th>
+                </tr>
+                {% for nombre, total in conteos %}
+                <tr>
+                    <td>{{ nombre }}</td>
+                    <td>{{ total }}</td>
+                </tr>
+                {% endfor %}
+            </table>
 
             <h3>Marcadores del mapa (polimorfismo)</h3>
+            {% if marcadores %}
             <table>
                 <tr>
                     <th>Tipo</th>
@@ -144,57 +158,9 @@
                 </tr>
                 {% endfor %}
             </table>
-
-            <h3>Detalle de cada elemento</h3>
-            <ul>
-                {% for elemento in elementos %}
-                <li>{{ elemento.mostrar_detalle }}</li>
-                {% endfor %}
-            </ul>
-
-            <h3>Resultados de la campaña</h3>
-            <ul>
-                {% for material, kilos in resultados.items %}
-                <li>{{ material }}: {{ kilos }} kg</li>
-                {% endfor %}
-            </ul>
-
-            <h3>Reportes ordenados por apoyos</h3>
-            <ol>
-                {% for reporte in reportes %}
-                <li>{{ reporte.titulo }} · {{ reporte.total_apoyos }} apoyo(s) · {{ reporte.estado }}</li>
-                {% endfor %}
-            </ol>
-
-            <h3>Historial de estados</h3>
-            <ul>
-                {% for cambio in historial %}
-                <li>
-                    {{ cambio.estado_anterior }} → {{ cambio.estado_nuevo }}
-                    por {{ cambio.responsable }}:
-                    {{ cambio.comentario }}
-                </li>
-                {% endfor %}
-            </ul>
-
-            <h3>Permisos por rol</h3>
-            <table>
-                {% for descripcion, permitido in permisos %}
-                <tr>
-                    <td>{{ descripcion }}</td>
-                    <td>
-                        {% if permitido %}
-                        <span class="ok">✔ Sí</span>
-                        {% else %}
-                        <span class="error">✘ No</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </table>
-
-            <h3>Validación</h3>
-            <p>Intento de registrar −2 kg: <span class="error">{{ error_validacion }}</span></p>
+            {% else %}
+            <p class="nota">Todavía no hay puntos, campañas ni reportes registrados.</p>
+            {% endif %}
         </section>
     </main>
 
