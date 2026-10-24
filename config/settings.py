@@ -139,3 +139,10 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+# Modelo de usuario propio (Semana 5)
+AUTH_USER_MODEL = 'usuarios.Usuario'
+
+# Archivos subidos por los usuarios (fotografías de reportes)
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
