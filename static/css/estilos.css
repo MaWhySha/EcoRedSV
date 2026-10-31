@@ -1,0 +1,92 @@
+:root {
+    --verde-eco: #2d6a4f;
+    --verde-eco-oscuro: #1f4f3a;
+    --verde-eco-claro: #e6f2eb;
+    --fondo: #f3f7f4;
+}
+
+body {
+    background: var(--fondo);
+}
+
+/* Barra de navegación y pie */
+.barra-eco {
+    background: var(--verde-eco);
+}
+
+.pie-eco {
+    background: var(--verde-eco-oscuro);
+    color: #e6f2eb;
+}
+
+/* Botones con el color del proyecto */
+.btn-eco {
+    background: var(--verde-eco);
+    border-color: var(--verde-eco);
+    color: #fff;
+}
+
+.btn-eco:hover,
+.btn-eco:focus {
+    background: var(--verde-eco-oscuro);
+    border-color: var(--verde-eco-oscuro);
+    color: #fff;
+}
+
+/* Tarjetas */
+.tarjeta-eco {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+}
+
+.tarjeta-eco .card-header {
+    background: var(--verde-eco-claro);
+    color: var(--verde-eco);
+    font-weight: 600;
+    border-bottom: none;
+}
+
+.titulo-seccion {
+    color: var(--verde-eco);
+    font-weight: 700;
+}
+
+/* Encabezado de la página de inicio */
+.portada-eco {
+    background: linear-gradient(135deg, var(--verde-eco), #40916c);
+    color: #fff;
+    border-radius: 16px;
+}
+
+/* Mapa */
+#mapa {
+    height: 420px;
+    border-radius: 12px;
+}
+
+/* Etiquetas de estado */
+.estado-CONFIRMADA,
+.estado-EN_CURSO,
+.estado-ATENDIDO {
+    background: #2d6a4f;
+}
+
+.estado-POR_CONFIRMAR,
+.estado-PROGRAMADA,
+.estado-RECIBIDO {
+    background: #6c757d;
+}
+
+.estado-EN_REVISION {
+    background: #e0a100;
+}
+
+.estado-FINALIZADA {
+    background: #1d4e89;
+}
+
+.estado-CANCELADA,
+.estado-DESCARTADO {
+    background: #b3261e;
+}

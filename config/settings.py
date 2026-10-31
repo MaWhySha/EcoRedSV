@@ -60,7 +60,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -129,6 +129,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+
+# Inicio de sesión
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'core:inicio'
+LOGOUT_REDIRECT_URL = 'core:inicio'
 
 
 # Email
@@ -146,3 +152,6 @@ AUTH_USER_MODEL = 'usuarios.Usuario'
 # Archivos subidos por los usuarios (fotografías de reportes)
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Envía el origen del sitio a servicios externos como OpenStreetMap
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
