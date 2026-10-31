@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Sum
+from django.urls import reverse
 
 from core.models import EntidadBase, Ubicable
 from usuarios.permisos import Accion
@@ -72,6 +73,9 @@ class Campania(Ubicable):
 
     def __str__(self):
         return self.titulo
+
+    def get_absolute_url(self):
+        return reverse('campanias:detalle', args=[self.pk])
 
     def clean(self):
         super().clean()

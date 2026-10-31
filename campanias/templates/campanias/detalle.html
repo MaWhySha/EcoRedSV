@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+
+{% block titulo %}{{ campania.titulo }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
+
+{% block contenido %}
+<nav aria-label="Ruta" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'campanias:lista' %}">Campañas</a></li>
+        <li class="breadcrumb-item active">{{ campania.titulo }}</li>
+    </ol>
+</nav>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <h1 class="h3 titulo-seccion mb-1">{{ campania.titulo }}</h1>
+        <span class="badge estado-{{ campania.estado }}">{{ campania.get_estado_display }}</span>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        {% for valor, etiqueta in transiciones %}
+        <form method="post" action="{% url 'campanias:cambiar_estado' campania.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="estado" value="{{ valor }}">
+            {% if valor == 'EN_CURSO' %}
+            <button type="submit" class="btn btn-success"><i class="bi bi-play-fill"></i> Iniciar</button>
+            {% elif valor == 'FINALIZADA' %}
+            <button type="submit" class="btn btn-primary"><i class="bi bi-flag"></i> Finalizar</button>
+            {% else %}
+            <button type="submit" class="btn btn-outline-danger"><i class="bi bi-x-circle"></i> Cancelar campaña</button>
+            {% endif %}
+        </form>
+        {% endfor %}
+        {% if puede_editar %}
+        <a href="{% url 'campanias:editar' campania.pk %}" class="btn btn-eco"><i class="bi bi-pencil"></i> Editar</a>
+        <a href="{% url 'campanias:eliminar' campania.pk %}" class="btn btn-outline-danger"><i class="bi bi-trash"></i> Eliminar</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-12 col-lg-6">
+        <div class="card tarjeta-eco mb-4">
+            <div class="card-header"><i class="bi bi-info-circle"></i> Información de la campaña</div>
+            <div class="card-body">
+                <p>{{ campania.descripcion }}</p>
+                <ul class="list-unstyled small mb-0">
+                    <li class="mb-1">
+                        <i class="bi bi-clock"></i>
+                        <strong>Inicio:</strong> {{ campania.fecha_inicio|date:'d/m/Y H:i' }}
+                        · <strong>Fin:</strong> {{ campania.fecha_fin|date:'d/m/Y H:i' }}
+                    </li>
+                    <li class="mb-1"><i class="bi bi-pin-map"></i> <strong>Lugar:</strong> {{ campania.direccion }}</li>
+                    <li class="mb-1"><i class="bi bi-map"></i> <strong>Municipio:</strong> {{ campania.municipio }}</li>
+                    <li class="mb-1">
+                        <i class="bi bi-building"></i>
+                        <strong>Organización:</strong> {{ campania.organizacion.nombre|default:'Sin organización' }}
+                    </li>
+                    <li class="mb-1">
+                        <i class="bi bi-geo-alt"></i> <strong>Punto:</strong>
+                        {% if campania.punto %}
+                        <a href="{{ campania.punto.get_absolute_url }}">{{ campania.punto.nombre }}</a>
+                        {% else %}
+                        No se realiza en un punto de recepción
+                        {% endif %}
+                    </li>
+                    <li><i class="bi bi-person"></i> <strong>Registrada por:</strong> {{ campania.creador.nombre }}</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card tarjeta-eco mb-4">
+            <div class="card-header"><i class="bi bi-recycle"></i> Materiales que recibe</div>
+            <div class="card-body">
+                {% for material in materiales %}
+                <span class="badge rounded-pill text-bg-light border">{{ material.nombre }}</span>
+                {% empty %}
+                <span class="small text-muted">No se indicaron materiales.</span>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="card tarjeta-eco">
+            <div class="card-header"><i class="bi bi-people"></i> Inscripciones</div>
+            <div class="card-body">
+                <p class="mb-3"><strong>{{ participaciones|length }}</strong> persona(s) inscrita(s).</p>
+                {% if user.is_authenticated %}
+                {% if inscrito %}
+                <form method="post" action="{% url 'campanias:cancelar_inscripcion' campania.pk %}">
+                    {% csrf_token %}
+                    <span class="text-success me-2"><i class="bi bi-check-circle"></i> Ya está inscrito.</span>
+                    {% if abierta %}
+                    <button type="submit" class="btn btn-sm btn-outline-secondary">Cancelar inscripción</button>
+                    {% endif %}
+                </form>
+                {% elif abierta %}
+                <form method="post" action="{% url 'campanias:inscribirse' campania.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-eco"><i class="bi bi-person-plus"></i> Inscribirme</button>
+                </form>
+                {% else %}
+                <p class="text-muted small mb-0">La campaña ya no admite inscripciones.</p>
+                {% endif %}
+                {% else %}
+                <a href="{% url 'login' %}?next={{ request.path }}">Inicie sesión</a> para inscribirse.
+                {% endif %}
+
+                {% if puede_editar and participaciones %}
+                <hr>
+                <ul class="list-unstyled small mb-0">
+                    {% for participacion in participaciones %}
+                    <li>
+                        <i class="bi bi-person"></i> {{ participacion.usuario.nombre }}
+                        <span class="text-muted">· {{ participacion.fecha_inscripcion|date:'d/m/Y' }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <div class="card tarjeta-eco mb-4">
+            <div class="card-header"><i class="bi bi-bar-chart"></i> Resultados de la campaña</div>
+            <div class="card-body">
+                <p class="display-6 fw-bold text-success mb-0">{{ total_kg }} kg</p>
+                <p class="small text-muted">recolectados en total</p>
+                <ul class="list-group list-group-flush">
+                    {% for material, kilos in totales.items %}
+                    <li class="list-group-item d-flex justify-content-between px-0">
+                        {{ material }} <strong>{{ kilos }} kg</strong>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item px-0 text-muted small">Todavía no hay pesos registrados.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            {% if form_peso %}
+            <div class="card-body border-top">
+                <p class="small fw-semibold mb-2">Registrar peso recolectado</p>
+                <form method="post" action="{% url 'campanias:registrar_peso' campania.pk %}" class="row g-2">
+                    {% csrf_token %}
+                    <div class="col-12 col-sm-5">{{ form_peso.material }}</div>
+                    <div class="col-6 col-sm-3">{{ form_peso.peso_kg }}</div>
+                    <div class="col-6 col-sm-4 d-grid">
+                        <button type="submit" class="btn btn-eco"><i class="bi bi-plus-lg"></i> Registrar</button>
+                    </div>
+                    <div class="col-12">{{ form_peso.observaciones }}</div>
+                </form>
+            </div>
+            {% endif %}
+
+            {% if registros %}
+            <div class="card-body border-top">
+                <p class="small fw-semibold mb-2">Historial de registros</p>
+                <div class="table-responsive">
+                    <table class="table table-sm small mb-0">
+                        <thead>
+                            <tr><th>Material</th><th>Kg</th><th>Registró</th><th>Fecha</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for registro in registros %}
+                            <tr>
+                                <td>{{ registro.material.nombre }}</td>
+                                <td>{{ registro.peso_kg }}</td>
+                                <td>{{ registro.registrado_por.nombre }}</td>
+                                <td>{{ registro.fecha_registro|date:'d/m/Y H:i' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="card tarjeta-eco">
+            <div class="card-header"><i class="bi bi-map"></i> Ubicación</div>
+            <div class="card-body">
+                <div id="mapa" style="height: 240px;" data-lat="{{ campania.latitud|stringformat:'f' }}"
+                    data-lon="{{ campania.longitud|stringformat:'f' }}" data-nombre="{{ campania.titulo }}"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    const contenedor = document.getElementById('mapa');
+    const posicion = [parseFloat(contenedor.dataset.lat), parseFloat(contenedor.dataset.lon)];
+    const mapa = L.map('mapa').setView(posicion, 15);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; colaboradores de OpenStreetMap',
+    }).addTo(mapa);
+    L.marker(posicion).addTo(mapa).bindPopup(contenedor.dataset.nombre);
+</script>
+{% endblock %}
