@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
 from django.db import models, transaction
 from django.db.models import Q
+from django.urls import reverse
 
 from core.models import EntidadBase, Ubicable
 from usuarios.permisos import Accion
@@ -66,6 +67,9 @@ class ReporteAmbiental(Ubicable):
 
     def __str__(self):
         return self.titulo
+
+    def get_absolute_url(self):
+        return reverse('reportes:detalle', args=[self.pk])
 
     @transaction.atomic
     def cambiar_estado(self, nuevo, usuario, comentario=''):

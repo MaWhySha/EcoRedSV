@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block titulo %}{{ reporte.titulo }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<style>
+    .gravedad-ALTA { background: #b3261e; }
+    .gravedad-MEDIA { background: #e0a100; }
+    .gravedad-BAJA { background: #6c757d; }
+</style>
+{% endblock %}
+
+{% block contenido %}
+<nav aria-label="Ruta" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'reportes:lista' %}">Reportes ambientales</a></li>
+        <li class="breadcrumb-item active">{{ reporte.titulo }}</li>
+    </ol>
+</nav>
+
+{% if not reporte.visible %}
+<div class="alert alert-dark">
+    <i class="bi bi-eye-slash"></i> Este reporte está oculto para el público por moderación.
+</div>
+{% endif %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <h1 class="h3 titulo-seccion mb-1">{{ reporte.titulo }}</h1>
+        <span class="badge gravedad-{{ reporte.gravedad }}">Gravedad {{ reporte.get_gravedad_display|lower }}</span>
+        <span class="badge estado-{{ reporte.estado }}">{{ reporte.get_estado_display }}</span>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        {% if es_admin and reporte.visible %}
+        <form method="post" action="{% url 'reportes:ocultar' reporte.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-dark"><i class="bi bi-eye-slash"></i> Ocultar</button>
+        </form>
+        {% endif %}
+        {% if puede_editar %}
+        <a href="{% url 'reportes:editar' reporte.pk %}" class="btn btn-eco"><i class="bi bi-pencil"></i> Editar</a>
+        <a href="{% url 'reportes:eliminar' reporte.pk %}" class="btn btn-outline-danger"><i class="bi bi-trash"></i> Eliminar</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-12 col-lg-7">
+        <div class="card tarjeta-eco mb-4">
+            {% if reporte.fotografia %}
+            <img src="{{ reporte.fotografia.url }}" class="card-img-top" alt="Fotografía del reporte"
+                style="max-height: 340px; object-fit: cover;">
+            {% endif %}
+            <div class="card-body">
+                <p>{{ reporte.descripcion }}</p>
+                <ul class="list-unstyled small mb-0">
+                    <li class="mb-1"><i class="bi bi-map"></i> <strong>Municipio:</strong> {{ reporte.municipio }}</li>
+                    <li class="mb-1">
+                        <i class="bi bi-pin-map"></i> <strong>Referencia:</strong> {{ reporte.direccion|default:'Sin referencia' }}
+                    </li>
+                    <li class="mb-1"><i class="bi bi-person"></i> <strong>Reportado por:</strong> {{ reporte.autor.nombre }}</li>
+                    <li><i class="bi bi-calendar"></i> <strong>Fecha:</strong> {{ reporte.fecha_reporte|date:'d/m/Y H:i' }}</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card tarjeta-eco mb-4">
+            <div class="card-header"><i class="bi bi-chat-dots"></i> Comentarios</div>
+            <ul class="list-group list-group-flush">
+                {% for comentario in comentarios %}
+                <li class="list-group-item d-flex justify-content-between align-items-start gap-2">
+                    <div>
+                        <strong class="small">{{ comentario.usuario.nombre }}</strong>
+                        <span class="small text-muted">· {{ comentario.fecha|date:'d/m/Y H:i' }}</span>
+                        {% if not comentario.visible %}<span class="badge text-bg-dark ms-1">Oculto</span>{% endif %}
+                        <div>{{ comentario.texto }}</div>
+                    </div>
+                    {% if es_admin and comentario.visible %}
+                    <form method="post" action="{% url 'reportes:ocultar_comentario' reporte.pk comentario.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-dark" title="Ocultar comentario">
+                            <i class="bi bi-eye-slash"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted small">Todavía no hay comentarios.</li>
+                {% endfor %}
+            </ul>
+            {% if form_comentario %}
+            <div class="card-body border-top">
+                <form method="post" action="{% url 'reportes:comentar' reporte.pk %}">
+                    {% csrf_token %}
+                    {{ form_comentario.texto }}
+                    <button type="submit" class="btn btn-eco btn-sm mt-2"><i class="bi bi-send"></i> Comentar</button>
+                </form>
+            </div>
+            {% elif not user.is_authenticated %}
+            <div class="card-body border-top small">
+                <a href="{% url 'login' %}?next={{ request.path }}">Inicie sesión</a> para comentar.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-5">
+        <div class="card tarjeta-eco mb-4">
+            <div class="card-header"><i class="bi bi-hand-thumbs-up"></i> Apoyos de la comunidad</div>
+            <div class="card-body">
+                <p class="display-6 fw-bold text-success mb-0">{{ total_apoyos }}</p>
+                <p class="small text-muted">persona(s) apoyan este reporte</p>
+                {% if ya_apoyo %}
+                <span class="text-success small"><i class="bi bi-check-circle"></i> Usted ya apoyó este reporte.</span>
+                {% elif puede_apoyar %}
+                <form method="post" action="{% url 'reportes:apoyar' reporte.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-eco"><i class="bi bi-hand-thumbs-up"></i> Apoyar</button>
+                </form>
+                {% elif not user.is_authenticated %}
+                <a href="{% url 'login' %}?next={{ request.path }}">Inicie sesión</a> para apoyar.
+                {% endif %}
+            </div>
+        </div>
+
+        {% if transiciones %}
+        <div class="card tarjeta-eco mb-4">
+            <div class="card-header"><i class="bi bi-arrow-repeat"></i> Gestionar el reporte</div>
+            <div class="card-body">
+                <form method="post" action="{% url 'reportes:cambiar_estado' reporte.pk %}">
+                    {% csrf_token %}
+                    <input type="text" name="comentario" class="form-control mb-2"
+                        placeholder="Acción realizada o motivo del cambio">
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for valor, etiqueta in transiciones %}
+                        <button type="submit" name="estado" value="{{ valor }}" class="btn btn-outline-success btn-sm">
+                            Pasar a: {{ etiqueta }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card tarjeta-eco mb-4">
+            <div class="card-header"><i class="bi bi-clock-history"></i> Historial de estados</div>
+            <ul class="list-group list-group-flush">
+                {% for seguimiento in seguimientos %}
+                <li class="list-group-item small">
+                    <strong>{{ seguimiento.get_estado_anterior_display }} → {{ seguimiento.get_estado_nuevo_display }}</strong>
+                    <div class="text-muted">
+                        {{ seguimiento.responsable.nombre }} · {{ seguimiento.fecha|date:'d/m/Y H:i' }}
+                    </div>
+                    {% if seguimiento.comentario %}<div>{{ seguimiento.comentario }}</div>{% endif %}
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted small">Todavía no hay cambios de estado.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="card tarjeta-eco">
+            <div class="card-header"><i class="bi bi-map"></i> Ubicación</div>
+            <div class="card-body">
+                <div id="mapa" style="height: 240px;" data-lat="{{ reporte.latitud|stringformat:'f' }}"
+                    data-lon="{{ reporte.longitud|stringformat:'f' }}" data-nombre="{{ reporte.titulo }}"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    const contenedor = document.getElementById('mapa');
+    const posicion = [parseFloat(contenedor.dataset.lat), parseFloat(contenedor.dataset.lon)];
+    const mapa = L.map('mapa').setView(posicion, 16);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; colaboradores de OpenStreetMap',
+    }).addTo(mapa);
+    L.marker(posicion).addTo(mapa).bindPopup(contenedor.dataset.nombre);
+</script>
+{% endblock %}

@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Reportes ambientales{% endblock %}
+
+{% block extra_css %}
+<style>
+    .gravedad-ALTA { background: #b3261e; }
+    .gravedad-MEDIA { background: #e0a100; }
+    .gravedad-BAJA { background: #6c757d; }
+    .foto-reporte { height: 160px; object-fit: cover; border-radius: 12px 12px 0 0; }
+</style>
+{% endblock %}
+
+{% block contenido %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 titulo-seccion mb-0"><i class="bi bi-exclamation-triangle"></i> Reportes ambientales</h1>
+    {% if puede_reportar %}
+    <a href="{% url 'reportes:crear' %}" class="btn btn-eco">
+        <i class="bi bi-plus-lg"></i> Reportar un problema
+    </a>
+    {% endif %}
+</div>
+
+<p class="text-muted">Los reportes con más apoyos de la comunidad se muestran primero.</p>
+
+<form method="get" class="card tarjeta-eco mb-4">
+    <div class="card-body row g-2 align-items-end">
+        <div class="col-6 col-md-4">
+            <label class="form-label small" for="estado">Estado</label>
+            <select name="estado" id="estado" class="form-select">
+                <option value="">Todos</option>
+                {% for valor, etiqueta in estados %}
+                {% if filtro_estado == valor %}
+                <option value="{{ valor }}" selected>{{ etiqueta }}</option>
+                {% else %}
+                <option value="{{ valor }}">{{ etiqueta }}</option>
+                {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-6 col-md-4">
+            <label class="form-label small" for="gravedad">Gravedad</label>
+            <select name="gravedad" id="gravedad" class="form-select">
+                <option value="">Todas</option>
+                {% for valor, etiqueta in gravedades %}
+                {% if filtro_gravedad == valor %}
+                <option value="{{ valor }}" selected>{{ etiqueta }}</option>
+                {% else %}
+                <option value="{{ valor }}">{{ etiqueta }}</option>
+                {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-12 col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-eco flex-fill"><i class="bi bi-funnel"></i> Filtrar</button>
+            <a href="{% url 'reportes:lista' %}" class="btn btn-outline-secondary" title="Limpiar filtros">
+                <i class="bi bi-x-lg"></i>
+            </a>
+        </div>
+    </div>
+</form>
+
+<div class="row g-3">
+    {% for reporte in reportes %}
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="card tarjeta-eco h-100">
+            {% if reporte.fotografia %}
+            <img src="{{ reporte.fotografia.url }}" class="foto-reporte" alt="Fotografía del reporte">
+            {% endif %}
+            <div class="card-body d-flex flex-column">
+                <div class="d-flex flex-wrap gap-1 mb-2">
+                    <span class="badge gravedad-{{ reporte.gravedad }}">Gravedad {{ reporte.get_gravedad_display|lower }}</span>
+                    <span class="badge estado-{{ reporte.estado }}">{{ reporte.get_estado_display }}</span>
+                    {% if not reporte.visible %}
+                    <span class="badge text-bg-dark">Oculto</span>
+                    {% endif %}
+                </div>
+                <h2 class="h5">{{ reporte.titulo }}</h2>
+                <p class="small text-muted mb-2">{{ reporte.descripcion|truncatechars:100 }}</p>
+                <p class="small mb-3">
+                    <i class="bi bi-pin-map"></i> {{ reporte.municipio.nombre }}
+                    · <i class="bi bi-hand-thumbs-up"></i> {{ reporte.num_apoyos }}
+                    · <i class="bi bi-chat"></i> {{ reporte.num_comentarios }}
+                    · {{ reporte.fecha_reporte|date:'d/m/Y' }}
+                </p>
+                <a href="{{ reporte.get_absolute_url }}" class="btn btn-outline-success btn-sm mt-auto">
+                    Ver detalle
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-light border text-center">No hay reportes con esos filtros.</div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if is_paginated %}
+<nav class="mt-4" aria-label="Páginas">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?{{ parametros }}&page={{ page_obj.previous_page_number }}">Anterior</a>
+        </li>
+        {% endif %}
+        <li class="page-item disabled">
+            <span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+        </li>
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?{{ parametros }}&page={{ page_obj.next_page_number }}">Siguiente</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}
