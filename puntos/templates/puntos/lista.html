@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Puntos de recepción{% endblock %}
+
+{% block contenido %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 titulo-seccion mb-0"><i class="bi bi-geo-alt"></i> Puntos de recepción</h1>
+    {% if puede_registrar %}
+    <a href="{% url 'puntos:crear' %}" class="btn btn-eco">
+        <i class="bi bi-plus-lg"></i> Registrar punto
+    </a>
+    {% endif %}
+</div>
+
+<form method="get" class="card tarjeta-eco mb-4">
+    <div class="card-body row g-2 align-items-end">
+        <div class="col-12 col-md-4">
+            <label class="form-label small" for="q">Buscar</label>
+            <input type="text" name="q" id="q" class="form-control" value="{{ filtro_q }}"
+                placeholder="Nombre o dirección">
+        </div>
+        <div class="col-6 col-md-3">
+            <label class="form-label small" for="municipio">Municipio</label>
+            <select name="municipio" id="municipio" class="form-select">
+                <option value="">Todos</option>
+                {% for m in municipios %}
+                {% if filtro_municipio == m.pk|stringformat:'s' %}
+                <option value="{{ m.pk }}" selected>{{ m.nombre }}</option>
+                {% else %}
+                <option value="{{ m.pk }}">{{ m.nombre }}</option>
+                {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-6 col-md-3">
+            <label class="form-label small" for="material">Material</label>
+            <select name="material" id="material" class="form-select">
+                <option value="">Todos</option>
+                {% for mat in materiales %}
+                {% if filtro_material == mat.pk|stringformat:'s' %}
+                <option value="{{ mat.pk }}" selected>{{ mat.nombre }}</option>
+                {% else %}
+                <option value="{{ mat.pk }}">{{ mat.nombre }}</option>
+                {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-12 col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-eco flex-fill"><i class="bi bi-search"></i> Filtrar</button>
+            <a href="{% url 'puntos:lista' %}" class="btn btn-outline-secondary" title="Limpiar filtros">
+                <i class="bi bi-x-lg"></i>
+            </a>
+        </div>
+    </div>
+</form>
+
+<div class="row g-3">
+    {% for punto in puntos %}
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="card tarjeta-eco h-100">
+            <div class="card-body d-flex flex-column">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h2 class="h5 mb-0">{{ punto.nombre }}</h2>
+                    <span class="badge estado-{{ punto.estado_informacion }}">
+                        {{ punto.get_estado_informacion_display }}
+                    </span>
+                </div>
+                <p class="text-muted small mb-2">
+                    <i class="bi bi-tag"></i> {{ punto.get_tipo_display }}
+                    · <i class="bi bi-pin-map"></i> {{ punto.municipio.nombre }}
+                </p>
+                <p class="small mb-2">{{ punto.direccion }}</p>
+                <div class="mb-3">
+                    {% for material in punto.materiales.all %}
+                    <span class="badge rounded-pill text-bg-light border">{{ material.nombre }}</span>
+                    {% empty %}
+                    <span class="small text-muted">Sin materiales registrados</span>
+                    {% endfor %}
+                </div>
+                {% if not punto.activo %}
+                <span class="badge text-bg-secondary mb-2 align-self-start">Inactivo</span>
+                {% endif %}
+                <a href="{{ punto.get_absolute_url }}" class="btn btn-outline-success btn-sm mt-auto">
+                    Ver detalle
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-light border text-center">
+            No se encontraron puntos con esos filtros.
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if is_paginated %}
+<nav class="mt-4" aria-label="Páginas">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?{{ parametros }}&page={{ page_obj.previous_page_number }}">Anterior</a>
+        </li>
+        {% endif %}
+        <li class="page-item disabled">
+            <span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+        </li>
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?{{ parametros }}&page={{ page_obj.next_page_number }}">Siguiente</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

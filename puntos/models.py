@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 
 from core.models import EntidadBase, Ubicable
@@ -30,6 +31,9 @@ class Material(EntidadBase):
 
     def __str__(self):
         return self.nombre
+
+    def get_absolute_url(self):
+        return reverse('puntos:materiales')
 
     def puntos_que_lo_reciben(self):
         """Puntos activos que reciben este material (base del filtro RF-05)."""
@@ -93,6 +97,9 @@ class PuntoRecepcion(Ubicable):
 
     def __str__(self):
         return self.nombre
+
+    def get_absolute_url(self):
+        return reverse('puntos:detalle', args=[self.pk])
 
     def agregar_material(self, material, observaciones=''):
         """Agrega un material; no puede repetirse en el mismo punto."""

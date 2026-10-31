@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block titulo %}{{ punto.nombre }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
+
+{% block contenido %}
+<nav aria-label="Ruta" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'puntos:lista' %}">Puntos de recepción</a></li>
+        <li class="breadcrumb-item active">{{ punto.nombre }}</li>
+    </ol>
+</nav>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <h1 class="h3 titulo-seccion mb-1">{{ punto.nombre }}</h1>
+        <span class="badge estado-{{ punto.estado_informacion }}">
+            Información {{ punto.get_estado_informacion_display|lower }}
+        </span>
+        {% if not punto.activo %}<span class="badge text-bg-secondary">Inactivo</span>{% endif %}
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        {% if es_admin and punto.estado_informacion == 'POR_CONFIRMAR' %}
+        <form method="post" action="{% url 'puntos:confirmar' punto.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success"><i class="bi bi-patch-check"></i> Confirmar información</button>
+        </form>
+        {% endif %}
+        {% if puede_editar %}
+        <a href="{% url 'puntos:editar' punto.pk %}" class="btn btn-eco"><i class="bi bi-pencil"></i> Editar</a>
+        <a href="{% url 'puntos:eliminar' punto.pk %}" class="btn btn-outline-danger"><i class="bi bi-trash"></i> Eliminar</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-12 col-lg-6">
+        <div class="card tarjeta-eco mb-4">
+            <div class="card-header"><i class="bi bi-info-circle"></i> Información del punto</div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item"><strong>Tipo:</strong> {{ punto.get_tipo_display }}</li>
+                <li class="list-group-item"><strong>Dirección:</strong> {{ punto.direccion }}</li>
+                <li class="list-group-item"><strong>Municipio:</strong> {{ punto.municipio }}</li>
+                <li class="list-group-item"><strong>Horario:</strong> {{ punto.horario|default:'No registrado' }}</li>
+                <li class="list-group-item">
+                    <strong>Condiciones de entrega:</strong> {{ punto.condiciones_entrega|default:'No registradas' }}
+                </li>
+                <li class="list-group-item">
+                    <strong>Teléfono:</strong> {{ punto.telefono_contacto|default:'No registrado' }}
+                </li>
+                <li class="list-group-item"><strong>Gestor:</strong> {{ punto.gestor.nombre|default:'Sin asignar' }}</li>
+            </ul>
+        </div>
+
+        <div class="card tarjeta-eco">
+            <div class="card-header"><i class="bi bi-calendar-event"></i> Campañas en este punto</div>
+            <ul class="list-group list-group-flush">
+                {% for campania in campanias %}
+                <li class="list-group-item d-flex justify-content-between">
+                    {{ campania.titulo }}
+                    <span class="badge estado-{{ campania.estado }}">{{ campania.get_estado_display }}</span>
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted small">No hay campañas registradas en este punto.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <div class="card tarjeta-eco mb-4">
+            <div class="card-header"><i class="bi bi-recycle"></i> Materiales que recibe</div>
+            <ul class="list-group list-group-flush">
+                {% for detalle in detalles %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ detalle.material.nombre }}</strong>
+                        <div class="small text-muted">
+                            {{ detalle.observaciones|default:detalle.material.indicaciones }}
+                        </div>
+                    </div>
+                    {% if puede_editar %}
+                    <form method="post" action="{% url 'puntos:quitar_material' punto.pk detalle.material.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Quitar material">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted small">Todavía no hay materiales registrados.</li>
+                {% endfor %}
+            </ul>
+
+            {% if form_material %}
+            <div class="card-body border-top">
+                <form method="post" action="{% url 'puntos:agregar_material' punto.pk %}" class="row g-2">
+                    {% csrf_token %}
+                    <div class="col-12 col-sm-5">{{ form_material.material }}</div>
+                    <div class="col-12 col-sm-5">{{ form_material.observaciones }}</div>
+                    <div class="col-12 col-sm-2 d-grid">
+                        <button type="submit" class="btn btn-eco" title="Agregar material">
+                            <i class="bi bi-plus-lg"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="card tarjeta-eco">
+            <div class="card-header"><i class="bi bi-map"></i> Ubicación</div>
+            <div class="card-body">
+                <div id="mapa" style="height: 260px;" data-lat="{{ punto.latitud|stringformat:'f' }}"
+                    data-lon="{{ punto.longitud|stringformat:'f' }}" data-nombre="{{ punto.nombre }}"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    const contenedor = document.getElementById('mapa');
+    const posicion = [parseFloat(contenedor.dataset.lat), parseFloat(contenedor.dataset.lon)];
+    const mapa = L.map('mapa').setView(posicion, 15);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; colaboradores de OpenStreetMap',
+    }).addTo(mapa);
+    L.marker(posicion).addTo(mapa).bindPopup(contenedor.dataset.nombre);
+</script>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Materiales{% endblock %}
+
+{% block contenido %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 titulo-seccion mb-0"><i class="bi bi-recycle"></i> Materiales reciclables</h1>
+    {% if puede_gestionar %}
+    <a href="{% url 'puntos:crear_material' %}" class="btn btn-eco">
+        <i class="bi bi-plus-lg"></i> Registrar material
+    </a>
+    {% endif %}
+</div>
+
+<p class="text-muted">
+    Catálogo de materiales que se pueden entregar, con las indicaciones para prepararlos.
+</p>
+
+<div class="card tarjeta-eco">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Material</th>
+                    <th>Categoría</th>
+                    <th>Cómo prepararlo</th>
+                    <th class="text-center">Puntos que lo reciben</th>
+                    {% if puede_gestionar %}<th class="text-end">Acciones</th>{% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for material in materiales %}
+                <tr>
+                    <td class="fw-semibold">{{ material.nombre }}</td>
+                    <td>{{ material.get_categoria_display }}</td>
+                    <td class="small">{{ material.indicaciones|default:'—' }}</td>
+                    <td class="text-center">
+                        <a href="{% url 'puntos:lista' %}?material={{ material.pk }}"
+                            class="badge rounded-pill text-bg-success text-decoration-none">
+                            {{ material.total_puntos }}
+                        </a>
+                    </td>
+                    {% if puede_gestionar %}
+                    <td class="text-end text-nowrap">
+                        <a href="{% url 'puntos:editar_material' material.pk %}" class="btn btn-sm btn-outline-success"
+                            title="Editar"><i class="bi bi-pencil"></i></a>
+                        <a href="{% url 'puntos:eliminar_material' material.pk %}" class="btn btn-sm btn-outline-danger"
+                            title="Eliminar"><i class="bi bi-trash"></i></a>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted">No hay materiales registrados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
