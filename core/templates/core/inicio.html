@@ -1,172 +1,127 @@
-<!DOCTYPE html>
-<html lang="es">
+{% extends 'base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>EcoRedSV</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: system-ui, sans-serif;
-            background: #f3f7f4;
-            color: #1f2d27;
-        }
+{% block titulo %}Inicio{% endblock %}
 
-        header {
-            background: #2d6a4f;
-            color: white;
-            padding: 2rem 1.5rem;
-            text-align: center;
-        }
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
 
-        header h1 {
-            margin: 0;
-            font-size: 2.2rem;
-        }
+{% block contenido %}
+{% url 'puntos:lista' as url_puntos %}
+{% url 'campanias:lista' as url_campanias %}
+{% url 'reportes:crear' as url_reportar %}
 
-        header p {
-            margin: .5rem 0 0;
-            opacity: .9;
-        }
+<section class="portada-eco p-4 p-md-5 mb-4">
+    <h1 class="fw-bold">Encuentra dónde entregar tus materiales reciclables</h1>
+    <p class="lead mb-4">
+        Consulta los puntos de recepción, las campañas de recolección y los reportes ambientales
+        de la Colonia Veracruz, Chalatenango.
+    </p>
+    <div class="d-flex flex-wrap gap-2">
+        {% if url_puntos %}
+        <a href="{{ url_puntos }}" class="btn btn-light">
+            <i class="bi bi-geo-alt"></i> Ver puntos de recepción
+        </a>
+        {% endif %}
+        {% if url_campanias %}
+        <a href="{{ url_campanias }}" class="btn btn-outline-light">
+            <i class="bi bi-calendar-event"></i> Ver campañas
+        </a>
+        {% endif %}
+        {% if url_reportar %}
+        <a href="{{ url_reportar }}" class="btn btn-outline-light">
+            <i class="bi bi-exclamation-triangle"></i> Reportar un problema
+        </a>
+        {% endif %}
+    </div>
+</section>
 
-        main {
-            max-width: 760px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
+<div class="row g-4">
+    <div class="col-12 col-lg-8">
+        <div class="card tarjeta-eco h-100">
+            <div class="card-header">
+                <i class="bi bi-map"></i> Mapa de puntos, campañas y reportes
+            </div>
+            <div class="card-body">
+                <div id="mapa"></div>
+                <div class="d-flex flex-wrap gap-3 mt-3 small">
+                    <span><i class="bi bi-circle-fill" style="color:#2d6a4f"></i> Punto de recepción</span>
+                    <span><i class="bi bi-circle-fill" style="color:#1d4e89"></i> Campaña</span>
+                    <span><i class="bi bi-circle-fill" style="color:#c0392b"></i> Reporte ambiental</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        .tarjeta {
-            background: white;
-            border-radius: 10px;
-            padding: 1.25rem 1.5rem;
-            margin-bottom: 1.25rem;
-            box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
-        }
-
-        .tarjeta h2 {
-            margin-top: 0;
-            font-size: 1.2rem;
-            color: #2d6a4f;
-        }
-
-        .ok {
-            color: #2d6a4f;
-            font-weight: bold;
-        }
-
-        .error {
-            color: #b3261e;
-            font-weight: bold;
-        }
-
-        ul {
-            padding-left: 1.2rem;
-        }
-
-        footer {
-            text-align: center;
-            font-size: .85rem;
-            color: #5c6b64;
-            padding: 1rem;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: .95rem;
-        }
-
-        th,
-        td {
-            text-align: left;
-            padding: .45rem .5rem;
-            border-bottom: 1px solid #e3ebe6;
-        }
-
-        th {
-            color: #2d6a4f;
-        }
-
-        .nota {
-            font-size: .85rem;
-            color: #5c6b64;
-        }
-    </style>
-</head>
-
-<body>
-    <header>
-        <h1>EcoRedSV</h1>
-        <p>Encuentra dónde entregar tus materiales reciclables</p>
-    </header>
-
-    <main>
-        <section class="tarjeta">
-            <h2>Estado del sistema</h2>
-            {% if estado_bd.conectado %}
-            <p class="ok">✔ Conectado a SQL Server</p>
-            <p><strong>Base de datos:</strong> {{ estado_bd.base }}</p>
-            <p><strong>Servidor:</strong> {{ estado_bd.version }}</p>
-            {% else %}
-            <p class="error">✘ Sin conexión con la base de datos</p>
-            <p>{{ estado_bd.error }}</p>
-            {% endif %}
-        </section>
-
-        <section class="tarjeta">
-            <h2>Módulos en desarrollo</h2>
-            <ul>
-                <li><strong>Usuarios:</strong> cuentas, roles, municipios y organizaciones.</li>
-                <li><strong>Puntos:</strong> lugares de entrega y materiales que reciben.</li>
-                <li><strong>Campañas:</strong> jornadas de recolección, inscripciones y resultados.</li>
-                <li><strong>Reportes:</strong> problemas ambientales, apoyos y comentarios.</li>
-            </ul>
-        </section>
-
-        <section class="tarjeta">
-            <h2>Datos registrados</h2>
-            <p class="nota">
-                Registros guardados en SQL Server, ingresados desde el panel de administración.
-            </p>
-            <table>
-                <tr>
-                    <th>Tabla</th>
-                    <th>Registros</th>
-                </tr>
+    <div class="col-12 col-lg-4">
+        <div class="card tarjeta-eco mb-4">
+            <div class="card-header"><i class="bi bi-bar-chart"></i> Datos registrados</div>
+            <ul class="list-group list-group-flush">
                 {% for nombre, total in conteos %}
-                <tr>
-                    <td>{{ nombre }}</td>
-                    <td>{{ total }}</td>
-                </tr>
+                <li class="list-group-item d-flex justify-content-between">
+                    {{ nombre }}
+                    <span class="badge text-bg-success rounded-pill">{{ total }}</span>
+                </li>
                 {% endfor %}
-            </table>
+            </ul>
+        </div>
 
-            <h3>Marcadores del mapa (polimorfismo)</h3>
-            {% if marcadores %}
-            <table>
-                <tr>
-                    <th>Tipo</th>
-                    <th>Título</th>
-                    <th>Ícono</th>
-                </tr>
-                {% for marcador in marcadores %}
-                <tr>
-                    <td>{{ marcador.tipo }}</td>
-                    <td>{{ marcador.titulo }}</td>
-                    <td>{{ marcador.icono }}</td>
-                </tr>
-                {% endfor %}
-            </table>
-            {% else %}
-            <p class="nota">Todavía no hay puntos, campañas ni reportes registrados.</p>
-            {% endif %}
-        </section>
-    </main>
+        <div class="card tarjeta-eco">
+            <div class="card-header"><i class="bi bi-database"></i> Estado del sistema</div>
+            <div class="card-body small">
+                {% if estado_bd.conectado %}
+                <p class="text-success fw-bold mb-1">
+                    <i class="bi bi-check-circle"></i> Conectado a SQL Server
+                </p>
+                <p class="mb-1">Base de datos: {{ estado_bd.base }}</p>
+                <p class="mb-0 text-muted">{{ estado_bd.version }}</p>
+                {% else %}
+                <p class="text-danger fw-bold mb-1">
+                    <i class="bi bi-x-circle"></i> Sin conexión con la base de datos
+                </p>
+                <p class="mb-0">{{ estado_bd.error }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
 
-    <footer>
-        Proyecto de Proyección Social · Grupo 6 · UNAB
-    </footer>
-</body>
+{{ marcadores|json_script:"datos-mapa" }}
+{% endblock %}
 
-</html>
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    const colores = { punto: '#2d6a4f', campania: '#1d4e89', reporte: '#c0392b' };
+    const marcadores = JSON.parse(document.getElementById('datos-mapa').textContent) || [];
+
+    // Centro inicial: Chalatenango
+    const mapa = L.map('mapa').setView([14.04, -88.94], 13);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; colaboradores de OpenStreetMap',
+    }).addTo(mapa);
+
+    const puntos = [];
+    marcadores.forEach((m) => {
+        const posicion = [m.latitud, m.longitud];
+        puntos.push(posicion);
+
+        const enlace = m.url ? `<br><a href="${m.url}">Ver detalle</a>` : '';
+        L.circleMarker(posicion, {
+            radius: 9,
+            color: '#ffffff',
+            weight: 2,
+            fillColor: colores[m.tipo] || '#555',
+            fillOpacity: 0.9,
+        })
+            .addTo(mapa)
+            .bindPopup(`<strong>${m.titulo}</strong><br><small>${m.detalle}</small>${enlace}`);
+    });
+
+    // Ajusta el zoom para que se vean todos los marcadores
+    if (puntos.length > 1) {
+        mapa.fitBounds(puntos, { padding: [30, 30] });
+    }
+</script>
+{% endblock %}

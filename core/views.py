@@ -24,7 +24,7 @@ def obtener_estado_bd():
 
 def contar_registros():
     """Cantidad de registros guardados en las tablas principales."""
-    modelos = [Usuario, Municipio, Organizacion, Material, PuntoRecepcion, Campania, ReporteAmbiental]
+    modelos = [PuntoRecepcion, Campania, ReporteAmbiental, Material, Municipio, Organizacion, Usuario]
     return [(m._meta.verbose_name_plural.capitalize(), m.objects.count()) for m in modelos]
 
 
@@ -38,11 +38,18 @@ def construir_marcadores():
         *Campania.objects.all(),
         *ReporteAmbiental.objects.filter(visible=True),
     ]
-    return [elemento.obtener_marcador() for elemento in elementos]
+    marcadores = []
+    for elemento in elementos:
+        marcador = elemento.obtener_marcador()
+        marcador['detalle'] = elemento.mostrar_detalle()
+        if hasattr(elemento, 'get_absolute_url'):
+            marcador['url'] = elemento.get_absolute_url()
+        marcadores.append(marcador)
+    return marcadores
 
 
 def inicio(request):
-    """Página de inicio de EcoRedSV."""
+    """Página de inicio de EcoRedSV con el mapa interactivo."""
     contexto = {'estado_bd': obtener_estado_bd()}
     if contexto['estado_bd']['conectado']:
         contexto['conteos'] = contar_registros()
