@@ -8,24 +8,38 @@ from usuarios.models import Municipio, Organizacion, Usuario
 
 
 def obtener_estado_bd():
-    """Comprueba la conexión con SQL Server y devuelve un resumen."""
+    """Comprueba la conexión con PostgreSQL y devuelve un resumen."""
     try:
         with connection.cursor() as cursor:
-            cursor.execute("SELECT DB_NAME(), @@VERSION")
+            cursor.execute("SELECT current_database(), version()")
             nombre, version = cursor.fetchone()
+
         return {
             'conectado': True,
             'base': nombre,
             'version': version.splitlines()[0],
         }
+
     except Exception as error:
         return {'conectado': False, 'error': str(error)}
 
 
 def contar_registros():
     """Cantidad de registros guardados en las tablas principales."""
-    modelos = [PuntoRecepcion, Campania, ReporteAmbiental, Material, Municipio, Organizacion, Usuario]
-    return [(m._meta.verbose_name_plural.capitalize(), m.objects.count()) for m in modelos]
+    modelos = [
+        PuntoRecepcion,
+        Campania,
+        ReporteAmbiental,
+        Material,
+        Municipio,
+        Organizacion,
+        Usuario,
+    ]
+
+    return [
+        (m._meta.verbose_name_plural.capitalize(), m.objects.count())
+        for m in modelos
+    ]
 
 
 def construir_marcadores():
@@ -38,20 +52,27 @@ def construir_marcadores():
         *Campania.objects.all(),
         *ReporteAmbiental.objects.filter(visible=True),
     ]
+
     marcadores = []
+
     for elemento in elementos:
         marcador = elemento.obtener_marcador()
         marcador['detalle'] = elemento.mostrar_detalle()
+
         if hasattr(elemento, 'get_absolute_url'):
             marcador['url'] = elemento.get_absolute_url()
+
         marcadores.append(marcador)
+
     return marcadores
 
 
 def inicio(request):
     """Página de inicio de EcoRedSV con el mapa interactivo."""
     contexto = {'estado_bd': obtener_estado_bd()}
+
     if contexto['estado_bd']['conectado']:
         contexto['conteos'] = contar_registros()
         contexto['marcadores'] = construir_marcadores()
+
     return render(request, 'core/inicio.html', contexto)
